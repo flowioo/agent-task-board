@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Board</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg-base: #09090b;
+    --bg-raised: #111113;
+    --bg-surface: #18181b;
+    --bg-hover: #1f1f23;
+    --border-subtle: #27272a;
+    --border-default: #2e2e32;
+    --text-primary: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-tertiary: #71717a;
+    --text-muted: #52525b;
+    --accent: #10b981;
+    --accent-muted: rgba(16,185,129,0.12);
+    --accent-text: #34d399;
+    --warn: #f59e0b;
+    --warn-muted: rgba(245,158,11,0.12);
+    --warn-text: #fbbf24;
+    --danger: #ef4444;
+    --danger-muted: rgba(239,68,68,0.12);
+    --danger-text: #f87171;
+    --info: #3b82f6;
+    --info-muted: rgba(59,130,246,0.12);
+    --info-text: #60a5fa;
+    --radius: 8px;
+    --radius-sm: 6px;
+    --radius-pill: 9999px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-base);
+    color: var(--text-secondary);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ── */
+  .header {
+    padding: 24px 32px 16px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .header h1 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+  .header .meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  /* ── Filters ── */
+  .filters {
+    padding: 0 32px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .filter-row:last-child { margin-bottom: 8px; }
+  .filter-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    min-width: 32px;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .filter-tag {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: all 0.12s ease;
+    user-select: none;
+  }
+  .filter-tag:hover {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    border-color: var(--border-default);
+  }
+  .filter-tag.active[data-group="project"] {
+    background: var(--accent-muted);
+    color: var(--accent-text);
+    border-color: rgba(16,185,129,0.25);
+  }
+  .filter-tag.active[data-group="status"] {
+    background: var(--warn-muted);
+    color: var(--warn-text);
+    border-color: rgba(245,158,11,0.25);
+  }
+  .filter-tag.active[data-group="tag"] {
+    background: var(--info-muted);
+    color: var(--info-text);
+    border-color: rgba(59,130,246,0.25);
+  }
+  .filter-all.active {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-default);
+  }
+
+  /* ── Board ── */
+  .board {
+    display: flex;
+    gap: 16px;
+    padding: 20px 32px;
+    overflow-x: auto;
+    min-height: calc(100vh - 160px);
+  }
+  .column {
+    flex: 1;
+    min-width: 240px;
+    max-width: 320px;
+  }
+  .column-header {
+    padding: 8px 0;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 8px;
+  }
+  .column-header .count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--bg-surface);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 6px;
+    border: 1px solid var(--border-subtle);
+    transition: border-color 0.12s ease, background 0.12s ease;
+    position: relative;
+  }
+  .card:hover {
+    border-color: var(--border-default);
+    background: var(--bg-hover);
+  }
+  .card[data-priority="P1"] { border-left: 2px solid var(--danger); }
+  .card[data-priority="P2"] { border-left: 2px solid var(--warn); }
+  .card[data-priority="P3"] { border-left: 2px solid var(--text-muted); }
+  .card.hidden { display: none; }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .card-id-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .card-id {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+  }
+  .copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.12s, color 0.12s;
+    display: flex;
+    align-items: center;
+  }
+  .card:hover .copy-btn { opacity: 1; }
+  .copy-btn:hover { color: var(--text-secondary); }
+  .copy-btn:active { color: var(--accent-text); }
+  .copy-btn svg { width: 13px; height: 13px; }
+  .copy-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    background: var(--bg-surface);
+    color: var(--accent-text);
+    border: 1px solid rgba(16,185,129,0.25);
+    padding: 6px 16px;
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    opacity: 0;
+    transition: opacity 0.15s, transform 0.15s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .copy-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .card-elapsed {
+    font-size: 10px;
+    color: var(--accent-text);
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--accent-muted);
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+  }
+  .card-elapsed.elapsed-blocked {
+    color: var(--danger-text);
+    background: var(--danger-muted);
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.45;
+    margin-bottom: 4px;
+  }
+  .card-desc {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+
+  /* Tags */
+  .card-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tag {
+    font-size: 10px;
+    padding: 1px 7px;
+    border-radius: var(--radius-pill);
+    background: var(--bg-base);
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-subtle);
+  }
+  .tag-priority {
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .tag-p1 { color: var(--danger-text); border-color: rgba(239,68,68,0.2); background: var(--danger-muted); }
+  .tag-p2 { color: var(--warn-text); border-color: rgba(245,158,11,0.2); background: var(--warn-muted); }
+  .tag-p3 { color: var(--text-muted); }
+  .tag-project { color: var(--accent-text); border-color: rgba(16,185,129,0.2); background: var(--accent-muted); }
+
+  /* Docs */
+  .card-links { margin-top: 8px; display: flex; gap: 8px; }
+  .doc-link {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    transition: color 0.1s;
+  }
+  .doc-link:hover { color: var(--info-text); }
+
+  /* Blocked */
+  .blocked-reason {
+    font-size: 11px;
+    color: var(--danger-text);
+    background: var(--danger-muted);
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    margin-top: 8px;
+    line-height: 1.45;
+  }
+
+  /* Time */
+  .card-time {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .empty-col {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 32px 0;
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Task Board</h1>
+  <span class="meta">__META_LINE__</span>
+</div>
+<div class="filters" id="filters">
+  <!-- __FILTER_PROJECT__ -->
+  <!-- __FILTER_STATUS__ -->
+  <!-- __FILTER_TAGS__ -->
+</div>
+<div class="board">
+<!-- __BOARD_CONTENT__ -->
+</div>
+<div class="copy-toast" id="copyToast"></div>
+<script>
+(function() {
+  var cards = document.querySelectorAll('.card');
+
+  function getActiveFilters() {
+    var result = { project: [], status: [], tag: [] };
+    document.querySelectorAll('.filter-tag.active').forEach(function(b) {
+      var g = b.dataset.group;
+      var f = b.dataset.filter;
+      if (g && f && f !== '__all__') result[g].push(f);
+    });
+    return result;
+  }
+
+  function isAllCleared(group) {
+    return document.querySelectorAll('.filter-tag[data-group="' + group + '"].active').length === 0;
+  }
+
+  document.querySelectorAll('.filter-tag').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var f = btn.dataset.filter;
+      var g = btn.dataset.group;
+      if (f === '__all__') {
+        document.querySelectorAll('.filter-tag[data-group="' + g + '"]').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+      } else {
+        var allBtn = document.querySelector('.filter-tag[data-group="' + g + '"][data-filter="__all__"]');
+        if (allBtn) allBtn.classList.remove('active');
+        btn.classList.toggle('active');
+        if (isAllCleared(g) && allBtn) allBtn.classList.add('active');
+      }
+      applyFilter();
+    });
+  });
+
+  function applyFilter() {
+    var af = getActiveFilters();
+    var pAll = af.project.length === 0;
+    var sAll = af.status.length === 0;
+    var tAll = af.tag.length === 0;
+
+    cards.forEach(function(c) {
+      var tags = c.dataset.tags.split(',');
+      var projTags = c.dataset.projects ? c.dataset.projects.split(',') : [];
+      var status = c.dataset.status;
+      var pMatch = pAll || af.project.some(function(p) { return projTags.indexOf(p) >= 0; });
+      var sMatch = sAll || af.status.indexOf(status) >= 0;
+      var tMatch = tAll || af.tag.some(function(a) { return tags.indexOf(a) >= 0; });
+      if (pMatch && sMatch && tMatch) c.classList.remove('hidden');
+      else c.classList.add('hidden');
+    });
+
+    document.querySelectorAll('.column').forEach(function(col) {
+      var total = col.querySelectorAll('.card').length;
+      var visible = col.querySelectorAll('.card:not(.hidden)').length;
+      var span = col.querySelector('.count');
+      if (span) span.textContent = visible === total ? total : visible + '/' + total;
+    });
+  }
+})();
+
+function copyId(id) {
+  var t = document.getElementById('copyToast');
+  if (!t) return;
+  navigator.clipboard.writeText(id).then(function() {
+    t.textContent = '📋 Copied ' + id;
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 1800);
+  }).catch(function() {
+    t.textContent = '❌ Copy failed';
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 1800);
+  });
+}
+</script>
+</body>
+</html>

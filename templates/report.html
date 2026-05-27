@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__TASK_ID__ Report</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg-base: #09090b;
+    --bg-raised: #111113;
+    --bg-surface: #18181b;
+    --bg-hover: #1f1f23;
+    --border-subtle: #27272a;
+    --border-default: #2e2e32;
+    --text-primary: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-tertiary: #71717a;
+    --text-muted: #52525b;
+    --accent: #10b981;
+    --accent-muted: rgba(16,185,129,0.12);
+    --accent-text: #34d399;
+    --danger: #ef4444;
+    --danger-muted: rgba(239,68,68,0.12);
+    --danger-text: #f87171;
+    --warn-text: #fbbf24;
+    --info-text: #60a5fa;
+    --radius: 8px;
+    --radius-sm: 6px;
+    --radius-pill: 9999px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg-base);
+    color: var(--text-secondary);
+    padding: 32px;
+    max-width: 640px;
+    margin: 0 auto;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .report-header { margin-bottom: 24px; }
+  .report-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+  .report-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+  }
+  .report-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.03em;
+  }
+  .badge-pass { background: var(--accent-muted); color: var(--accent-text); }
+  .badge-fail { background: var(--danger-muted); color: var(--danger-text); }
+  .badge-blocked { background: rgba(245,158,11,0.12); color: var(--warn-text); }
+
+  .section { margin: 24px 0; }
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 12px;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border-subtle); font-size: 12px; }
+  th {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  td { color: var(--text-secondary); }
+  .check-pass { color: var(--accent-text); }
+  .check-fail { color: var(--danger-text); }
+
+  .flow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--info-text);
+    background: var(--bg-surface);
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-subtle);
+    margin: 8px 0;
+  }
+
+  .note {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    padding: 4px 0;
+    line-height: 1.5;
+  }
+  .note::before { content: '— '; color: var(--text-muted); }
+
+  .back-link {
+    display: inline-block;
+    margin-top: 32px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    transition: color 0.1s;
+  }
+  .back-link:hover { color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<div class="report-header">
+  <div class="report-id">__TASK_ID__ Report</div>
+  <h1 class="report-title">__TASK_TITLE__</h1>
+  <div class="report-meta">
+    <span>__DATE__</span>
+    <span class="badge __RESULT_BADGE__">__RESULT__</span>
+  </div>
+</div>
+
+<!-- __CHECKS_SECTION__ -->
+<!-- __FLOW_SECTION__ -->
+<!-- __NOTES_SECTION__ -->
+
+<a class="back-link" href="../board.html">← board</a>
+</body>
+</html>
