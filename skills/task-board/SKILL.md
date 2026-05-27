@@ -1,7 +1,7 @@
 ---
 name: task-board
 description: 单文件任务看板。标签区分项目，HTML渲染，状态机，编号，文档关联，三行筛选，耗时显示。
-version: 0.3.1
+version: 0.4.0
 ---
 
 # Task Board Skill
@@ -35,6 +35,18 @@ version: 0.3.1
 | 给 T-NNN 关联 PRD xxx | 更新 docs.prd | - |
 | 给 T-NNN 关联技术方案 xxx | 更新 docs.tech | - |
 | 看板 | open board.html | - |
+| 分析 xxx 项目/问题 | 分析后自动创建任务 | - |
+
+## 分析 → 自动创建任务
+
+当用户说"分析 xxx"或"这个项目推不动了"时，agent 应该：
+1. 分析项目状态（文件、git log、现有任务）
+2. 识别卡点和待办事项
+3. **自动创建任务到看板**，不需要等用户说"创建任务"
+4. 每个任务标注项目标签（cwd basename）+ 合适的 priority
+5. 告知用户创建了哪些任务，推荐从哪个开始
+
+这比用户手动一个个说"创建任务"更高效。
 
 ## 状态机
 
@@ -48,6 +60,18 @@ pending → in_progress → done
 ```
 
 done/cancelled 是终态。blocked 必须填 blocked_reason。done 必须填 completed_at。
+
+## mention_at
+
+每个任务有 `mention_at` 字段，表示"什么时候该关注这个任务"。
+- 创建时 mention_at = created_at
+- 状态变更时（开始/交接/阻塞解除）更新 mention_at = now
+- 用于标记"这个任务该看了"的时刻
+
+## 筛选记忆
+
+看板用 localStorage 记住上次筛选状态（key: taskboard_filters）。
+刷新页面自动恢复 project/status/tag 三行筛选。
 
 ## 渲染
 

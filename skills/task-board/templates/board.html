@@ -45,7 +45,6 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ── Header ── */
   .header {
     padding: 24px 32px 16px;
     display: flex;
@@ -59,13 +58,11 @@
     letter-spacing: -0.01em;
   }
   .header .meta {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-muted);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
   }
 
-  /* ── Filters ── */
   .filters {
     padding: 0 32px 16px;
     border-bottom: 1px solid var(--border-subtle);
@@ -123,7 +120,6 @@
     border-color: var(--border-default);
   }
 
-  /* ── Board ── */
   .board {
     display: flex;
     gap: 16px;
@@ -156,7 +152,6 @@
     color: var(--text-muted);
   }
 
-  /* ── Card ── */
   .card {
     background: var(--bg-surface);
     border-radius: var(--radius);
@@ -228,6 +223,7 @@
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
+
   .card-elapsed {
     font-size: 10px;
     color: var(--accent-text);
@@ -255,7 +251,6 @@
     margin-bottom: 8px;
   }
 
-  /* Tags */
   .card-tags { display: flex; gap: 4px; flex-wrap: wrap; }
   .tag {
     font-size: 10px;
@@ -265,16 +260,12 @@
     color: var(--text-tertiary);
     border: 1px solid var(--border-subtle);
   }
-  .tag-priority {
-    font-weight: 600;
-    font-family: 'JetBrains Mono', monospace;
-  }
+  .tag-priority { font-weight: 600; font-family: 'JetBrains Mono', monospace; }
   .tag-p1 { color: var(--danger-text); border-color: rgba(239,68,68,0.2); background: var(--danger-muted); }
   .tag-p2 { color: var(--warn-text); border-color: rgba(245,158,11,0.2); background: var(--warn-muted); }
   .tag-p3 { color: var(--text-muted); }
   .tag-project { color: var(--accent-text); border-color: rgba(16,185,129,0.2); background: var(--accent-muted); }
 
-  /* Docs */
   .card-links { margin-top: 8px; display: flex; gap: 8px; }
   .doc-link {
     font-size: 10px;
@@ -285,7 +276,6 @@
   }
   .doc-link:hover { color: var(--info-text); }
 
-  /* Blocked */
   .blocked-reason {
     font-size: 11px;
     color: var(--danger-text);
@@ -296,7 +286,6 @@
     line-height: 1.45;
   }
 
-  /* Time */
   .card-time {
     font-size: 10px;
     color: var(--text-muted);
@@ -318,19 +307,91 @@
 <body>
 <div class="header">
   <h1>Task Board</h1>
-  <span class="meta">__META_LINE__</span>
+  <span class="meta">{{ meta }}</span>
 </div>
 <div class="filters" id="filters">
-  <!-- __FILTER_PROJECT__ -->
-  <!-- __FILTER_STATUS__ -->
-  <!-- __FILTER_TAGS__ -->
+  <div class="filter-row">
+    <span class="filter-label">项目:</span>
+    <span class="filter-tag filter-all active" data-group="project" data-filter="__all__">全部</span>
+    {% for item in filters.project %}
+    <span class="filter-tag" data-group="project" data-filter="{{ item.name }}">{{ item.name }} ({{ item.count }})</span>
+    {% endfor %}
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">状态:</span>
+    <span class="filter-tag filter-all active" data-group="status" data-filter="__all__">全部</span>
+    {% for item in filters.status %}
+    <span class="filter-tag" data-group="status" data-filter="{{ item.name }}">{{ item.label }} ({{ item.count }})</span>
+    {% endfor %}
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">标签:</span>
+    <span class="filter-tag filter-all active" data-group="tag" data-filter="__all__">全部</span>
+    {% for item in filters.tag %}
+    <span class="filter-tag" data-group="tag" data-filter="{{ item.name }}">{{ item.name }} ({{ item.count }})</span>
+    {% endfor %}
+  </div>
 </div>
 <div class="board">
-<!-- __BOARD_CONTENT__ -->
+{% for col in columns %}
+  <div class="column col-{{ col.status }}">
+    <div class="column-header">{{ col.label }} <span class="count">{{ col.count }}</span></div>
+    <div class="column-body">
+    {% if col.cards %}
+      {% for c in col.cards %}
+      <div class="card" data-priority="{{ c.priority }}" data-tags="{{ c.tag_str }}" data-projects="{{ c.proj_str }}" data-status="{{ c.status }}">
+        <div class="card-top">
+          <div class="card-id-wrap">
+            <span class="card-id">{{ c.id }}</span>
+            <button class="copy-btn" onclick="copyId('{{ c.id }}')" title="Copy {{ c.id }}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="10" height="10" rx="1.5"/><path d="M4 5V3.5A1.5 1.5 0 0 1 5.5 2H12a2 2 0 0 1 2 2v6.5a1.5 1.5 0 0 1-1.5 1.5H11"/></svg></button>
+          </div>
+          {% if c.elapsed %}<span class="card-elapsed{% if c.elapsed_class %} {{ c.elapsed_class }}{% endif %}">{{ c.elapsed }}</span>{% endif %}
+        </div>
+        <div class="card-title">{{ c.title }}</div>
+        {% if c.description %}
+        <div class="card-desc">{{ c.description }}</div>
+        {% endif %}
+        <div class="card-tags">
+          <span class="tag tag-priority tag-p{{ c.plevel }}">{{ c.priority }}</span>
+          {% for t in c.project_tags %}
+          <span class="tag tag-project">{{ t }}</span>
+          {% endfor %}
+          {% for t in c.normal_tags %}
+          <span class="tag">{{ t }}</span>
+          {% endfor %}
+        </div>
+        {% if c.docs.prd or c.docs.tech or c.report %}
+        <div class="card-links">
+          {% if c.docs.prd %}<a class="doc-link" href="{{ c.docs.prd }}">PRD</a>{% endif %}
+          {% if c.docs.tech %}<a class="doc-link" href="{{ c.docs.tech }}">Tech Spec</a>{% endif %}
+          {% if c.report %}<a class="doc-link" href="{{ c.report }}">Report</a>{% endif %}
+        </div>
+        {% endif %}
+        {% if c.blocked_reason %}
+        <div class="blocked-reason">{{ c.blocked_reason }}</div>
+        {% endif %}
+        {% if c.notes %}
+          {% for n in c.notes[:2] %}
+          <div class="card-desc" style="color:#777">• {{ n }}</div>
+          {% endfor %}
+        {% endif %}
+        <div class="card-time">
+          <span>created {{ c.created }}</span>
+          <span>updated {{ c.updated }}{% if c.assignee %} · @{{ c.assignee }}{% endif %}</span>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-col">—</div>
+    {% endif %}
+    </div>
+  </div>
+{% endfor %}
 </div>
 <div class="copy-toast" id="copyToast"></div>
 <script>
 (function() {
+  var STORAGE_KEY = 'taskboard_filters';
   var cards = document.querySelectorAll('.card');
 
   function getActiveFilters() {
@@ -341,6 +402,33 @@
       if (g && f && f !== '__all__') result[g].push(f);
     });
     return result;
+  }
+
+  function saveFilters() {
+    try {
+      var state = getActiveFilters();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch(e) {}
+  }
+
+  function loadFilters() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      var state = JSON.parse(raw);
+      ['project', 'status', 'tag'].forEach(function(group) {
+        var vals = state[group] || [];
+        if (vals.length === 0) return;
+        // clear "all" for this group
+        var allBtn = document.querySelector('.filter-tag[data-group="' + group + '"][data-filter="__all__"]');
+        if (allBtn) allBtn.classList.remove('active');
+        // activate saved filters
+        vals.forEach(function(v) {
+          var btn = document.querySelector('.filter-tag[data-group="' + group + '"][data-filter="' + v + '"]');
+          if (btn) btn.classList.add('active');
+        });
+      });
+    } catch(e) {}
   }
 
   function isAllCleared(group) {
@@ -361,6 +449,7 @@
         if (isAllCleared(g) && allBtn) allBtn.classList.add('active');
       }
       applyFilter();
+      saveFilters();
     });
   });
 
@@ -371,7 +460,7 @@
     var tAll = af.tag.length === 0;
 
     cards.forEach(function(c) {
-      var tags = c.dataset.tags.split(',');
+      var tags = c.dataset.tags ? c.dataset.tags.split(',') : [];
       var projTags = c.dataset.projects ? c.dataset.projects.split(',') : [];
       var status = c.dataset.status;
       var pMatch = pAll || af.project.some(function(p) { return projTags.indexOf(p) >= 0; });
@@ -388,17 +477,21 @@
       if (span) span.textContent = visible === total ? total : visible + '/' + total;
     });
   }
+
+  // Restore saved filters on load
+  loadFilters();
+  applyFilter();
 })();
 
 function copyId(id) {
   var t = document.getElementById('copyToast');
   if (!t) return;
   navigator.clipboard.writeText(id).then(function() {
-    t.textContent = '📋 Copied ' + id;
+    t.textContent = 'Copied ' + id;
     t.classList.add('show');
     setTimeout(function() { t.classList.remove('show'); }, 1800);
   }).catch(function() {
-    t.textContent = '❌ Copy failed';
+    t.textContent = 'Copy failed';
     t.classList.add('show');
     setTimeout(function() { t.classList.remove('show'); }, 1800);
   });
